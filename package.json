@@ -1,0 +1,61 @@
+{
+  "name": "@rosca/contracts",
+  "version": "1.0.0",
+  "description": "ROSCA Protocol smart contract addresses, ABIs, and types for World Chain",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./addresses": {
+      "types": "./dist/addresses.d.ts",
+      "import": "./dist/addresses.mjs",
+      "require": "./dist/addresses.js"
+    },
+    "./abis": {
+      "types": "./dist/abis.d.ts",
+      "import": "./dist/abis.mjs",
+      "require": "./dist/abis.js"
+    },
+    "./tokens": {
+      "types": "./dist/tokens.d.ts",
+      "import": "./dist/tokens.mjs",
+      "require": "./dist/tokens.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts src/addresses.ts src/abis.ts src/tokens.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts src/addresses.ts src/abis.ts src/tokens.ts --format cjs,esm --dts --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "rosca",
+    "worldchain",
+    "smart-contracts",
+    "web3",
+    "ethereum"
+  ],
+  "author": "ROSCA Team",
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.5.0"
+  },
+  "peerDependencies": {
+    "viem": "^2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "viem": {
+      "optional": true
+    }
+  }
+}
