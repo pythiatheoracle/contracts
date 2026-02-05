@@ -28,16 +28,13 @@ export enum MemberStatus {
 }
 
 export enum VerificationLevel {
-  NONE = 0,
-  ORB = 1,
-  PHONE = 2,
+  DEVICE = 0, // Phone/device verification (off-chain only on World Chain)
+  ORB = 1, // Biometric orb verification (on-chain supported)
 }
 
-export enum PositionMode {
-  FCFS = 0,        // First Come First Serve
-  RANDOM = 1,      // Random assignment at start
-  AUCTION = 2,     // Bid for positions
-  PRESET = 3,      // Creator sets positions
+export enum PayoutOrder {
+  FIFO = 0, // Position = commit order
+  RANDOM = 1, // Fisher-Yates shuffle at activation
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -81,8 +78,8 @@ export interface MemberInfo {
 export interface UserReputation {
   completedCycles: number
   defaultCount: number
-  totalVolume: bigint
-  lastActivity: Date | null
+  totalVolumeContributed: bigint
+  firstParticipation: Date | null
   isBanned: boolean
 }
 

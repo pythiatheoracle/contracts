@@ -30,12 +30,14 @@ __export(index_exports, {
   INSURANCE_POOL_ABI: () => INSURANCE_POOL_ABI,
   MAINNET_CONTRACTS: () => MAINNET_CONTRACTS,
   MemberStatus: () => MemberStatus,
-  PositionMode: () => PositionMode,
+  PayoutOrder: () => PayoutOrder,
   ROUTER_ABI: () => ROUTER_ABI,
   TESTNET_CONTRACTS: () => TESTNET_CONTRACTS,
   TOKENS: () => TOKENS,
   TOKEN_ADDRESSES: () => TOKEN_ADDRESSES,
+  USER_DATA_STORAGE_ABI: () => USER_DATA_STORAGE_ABI,
   VerificationLevel: () => VerificationLevel,
+  WORLD_ID_VERIFIER_ABI: () => WORLD_ID_VERIFIER_ABI,
   formatTokenAmount: () => formatTokenAmount,
   getContracts: () => getContracts,
   getToken: () => getToken,
@@ -249,22 +251,74 @@ function parseTokenAmount(amount, symbol) {
 var FACTORY_ABI = [
   // View functions
   "function getAllGroups() view returns (address[])",
-  "function isValidGroup(address) view returns (bool)",
-  "function getUserReputation(address) view returns (uint32 completedCycles, uint32 defaultCount, uint64 totalVolume, uint40 lastActivity, bool isBanned)",
-  "function isVerifiedHuman(address) view returns (bool)",
-  "function userVerificationLevel(address) view returns (uint8)",
+  "function totalGroups() view returns (uint256)",
+  "function allGroups(uint256 index) view returns (address)",
+  "function isValidGroup(address group) view returns (bool)",
+  "function isTokenAllowed(address token) view returns (bool)",
+  "function allowedTokens(address token) view returns (bool)",
+  "function minGroupSize() view returns (uint8)",
+  "function maxGroupSize() view returns (uint8)",
+  "function unbanFeeMultiplierBps() view returns (uint256)",
+  "function admin() view returns (address)",
+  "function pendingAdmin() view returns (address)",
+  "function incentivePool() view returns (address)",
+  "function insurancePool() view returns (address)",
+  "function router() view returns (address)",
+  // User data (delegates to UserDataStorage)
+  "function getUserReputation(address user) view returns (uint32 completedCycles, uint32 defaultCount, uint64 totalVolumeContributed, uint40 firstParticipation, bool isBanned)",
+  "function isVerifiedHuman(address user) view returns (bool)",
+  "function meetsVerificationLevel(address user, uint8 requiredLevel) view returns (bool)",
+  "function getUserVerificationLevel(address user) view returns (uint8)",
+  "function getUserVerificationLevelRaw(address user) view returns (uint8)",
+  "function isBanned(address user) view returns (bool)",
+  "function getTotalDefaultedAmount(address user) view returns (uint256)",
+  "function meetsRequirements(address user, uint32 minCompletedCycles) view returns (bool)",
   // Write functions
-  "function createGroup((string name, uint8 capacity, uint256 contributionAmount, uint8 frequencyDays, address paymentToken, uint8 collateralPercent, uint8 escrowPercent, uint8 escrowDelayEpochs, uint8 positionMode, uint8 requiredVerification, uint8 gracePeriodDays, bool isInsured) params, address[] whitelist, uint256 commitDeadline, uint256 startTime, uint256[8] positions) returns (address)",
+  "function createGroup((string name, uint8 memberCount, uint256 contributionAmount, uint32 frequencySeconds, address paymentToken, uint16 collateralPercent, uint16 escrowPercent, uint8 escrowDelayEpochs, uint32 gracePeriodSeconds, uint8 requiredVerificationLevel, bool isInsured, uint32 minCompletedCycles, uint32 maxDefaultCount, uint64 minTotalVolume, uint40 minAccountAge, uint8 payoutOrder, bool affectsReputation) config, address[] whitelist) returns (address group)",
+  "function unban(address token)",
+  // Admin functions
+  "function setRouter(address _router)",
+  "function setUnbanFeeMultiplier(uint256 _multiplierBps)",
+  "function setGroupSizeLimits(uint8 _minSize, uint8 _maxSize)",
+  "function addAllowedToken(address token)",
+  "function removeAllowedToken(address token)",
+  "function transferAdmin(address _newAdmin)",
+  "function acceptAdmin()",
+  "function cancelAdminTransfer()",
   // Events
-  "event GroupCreated(address indexed group, address indexed creator, uint8 capacity, uint256 contributionAmount, address paymentToken)"
+  "event GroupCreated(address indexed group, address indexed creator, uint8 memberCount, uint256 contributionAmount, address token)",
+  "event UserBannedEvent(address indexed user, uint32 defaultCount)",
+  "event UserUnbanned(address indexed user, uint256 feePaid)",
+  "event CycleCompleted(address indexed user, address indexed group, uint256 volume)",
+  "event DefaultRecorded(address indexed user, address indexed group)",
+  "event TokenAllowlistUpdated(address indexed token, bool allowed)",
+  "event RouterSet(address indexed router)",
+  "event AdminTransferInitiated(address indexed currentAdmin, address indexed pendingAdmin)",
+  "event AdminTransferCompleted(address indexed oldAdmin, address indexed newAdmin)",
+  "event GroupSizeLimitsUpdated(uint8 newMinSize, uint8 newMaxSize)"
 ];
 var ROUTER_ABI = [
-  // Write functions
-  "function commit(address group) payable",
+  // View functions
+  "function factory() view returns (address)",
+  "function getGroupStatus(address group) view returns (uint8)",
+  "function getRequiredCollateral(address group) view returns (uint256)",
+  "function getContributionAmount(address group) view returns (uint256)",
+  "function isWhitelisted(address group, address user) view returns (bool)",
+  "function getCurrentEpoch(address group) view returns (uint8)",
+  "function hasContributed(address group, address user) view returns (bool)",
+  // Write functions (standard)
+  "function commit(address group)",
   "function contribute(address group, uint8 expectedEpoch)",
   "function withdrawCollateral(address group)",
   "function claimEscrow(address group)",
-  "function leaveGroup(address group)"
+  "function leaveGroup(address group)",
+  // Write functions (FromBalance - MiniKit Pay flow)
+  "function commitFromBalance(address group, address user)",
+  "function contributeFromBalance(address group, address user, uint8 expectedEpoch)",
+  // Events
+  "event CommitRouted(address indexed group, address indexed user)",
+  "event ContributionRouted(address indexed group, address indexed user, uint256 amount)",
+  "event WithdrawRouted(address indexed group, address indexed user)"
 ];
 var GROUP_ABI = [
   // Basic info
@@ -278,52 +332,167 @@ var GROUP_ABI = [
   // Financial params
   "function contributionAmount() view returns (uint256)",
   "function paymentToken() view returns (address)",
-  "function collateralPercent() view returns (uint8)",
-  "function escrowPercent() view returns (uint8)",
+  "function collateralPercent() view returns (uint16)",
+  "function escrowPercent() view returns (uint16)",
   "function escrowDelayEpochs() view returns (uint8)",
   "function requiredCollateral() view returns (uint256)",
+  "function expectedPayout() view returns (uint256)",
   // Timing
-  "function frequencySeconds() view returns (uint256)",
+  "function frequencySeconds() view returns (uint32)",
   "function commitDeadline() view returns (uint256)",
   "function startTime() view returns (uint256)",
-  "function gracePeriodSeconds() view returns (uint256)",
+  "function gracePeriodSeconds() view returns (uint32)",
   // Insurance
   "function isInsured() view returns (bool)",
   "function insuranceRateBps() view returns (uint256)",
+  // Reputation requirements
+  "function requiredVerificationLevel() view returns (uint8)",
+  "function affectsReputation() view returns (bool)",
+  "function payoutOrder() view returns (uint8)",
   // Members
   "function getAllMembers() view returns (address[])",
-  "function getMember(address) view returns (address wallet, uint8 status, uint8 position, uint256 collateralDeposited, uint256 escrowBalance, uint256 escrowReleaseTime, uint256 totalContributed, bool hasReceivedPayout, uint40 committedAt)",
+  "function getMember(address) view returns (address addr, uint8 status, uint8 position, uint256 collateralDeposited, uint256 escrowBalance, uint256 escrowReleaseTime, uint256 totalContributed, bool hasReceivedPayout, uint40 committedAt)",
   "function isWhitelisted(address) view returns (bool)",
-  // Epoch info
-  "function getEpochInfo() view returns (uint8 epoch, address recipient, uint256 epochStart, uint256 epochEnd, uint256 graceEnd, uint8 paymentsMade, uint8 paymentsExpected)",
-  "function getGroupSummary() view returns (uint8 status, uint8 memberCount, uint8 committedCount, uint8 activeCount, uint256 totalCollateral, uint256 totalEscrow, uint256 totalContributed, bool isInsured)",
+  "function hasContributedInEpoch(address user, uint8 epoch) view returns (bool)",
+  // Aggregated views
+  "function getEpochInfo() view returns (uint8 epoch, address recipient, uint256 epochStart, uint256 epochEnd, uint256 gracePeriodEnd, uint8 paymentsMade, uint8 paymentsExpected)",
+  "function getGroupSummary() view returns (uint8 currentStatus, uint8 committed, uint8 active, uint8 epoch, uint256 localInsurance, uint256 collateralHeld, uint256 escrowHeld, bool insured)",
   "function getContributionBreakdown() view returns (uint256 total, uint256 netToRecipient, uint256 toInsurance)",
+  // Write functions
+  "function commit()",
+  "function commitFor(address user)",
+  "function contribute(uint8 expectedEpoch)",
+  "function contributeFor(address user, uint8 expectedEpoch)",
+  "function finalizeCommitPhase()",
+  "function finalizeCycle()",
+  "function claimEscrow()",
+  "function claimEscrowFor(address user)",
+  "function claimCollateral()",
+  "function withdrawCollateralFor(address user)",
+  "function refundCollateral()",
+  "function leave()",
+  "function leaveFor(address user)",
   // Events
-  "event MemberJoined(address indexed member, uint8 position)",
-  "event ContributionMade(address indexed member, uint8 epoch, uint256 amount)",
-  "event PayoutReceived(address indexed recipient, uint8 epoch, uint256 amount)"
+  "event MemberCommitted(address indexed member, uint8 position, uint256 collateral)",
+  "event GroupActivated(uint256 startTime, uint8 totalMembers)",
+  "event GroupFailed_Event()",
+  "event Contribution(address indexed from, address indexed to, uint256 amount, uint8 epoch)",
+  "event PayoutClaimed(address indexed member, uint256 immediateAmount, uint256 escrowAmount)",
+  "event EscrowReleased(address indexed member, uint256 amount)",
+  "event CollateralReturned(address indexed member, uint256 amount)",
+  "event CollateralSlashed(address indexed member, uint256 amount)",
+  "event MemberDefaultedEvent(address indexed member, uint8 epoch)",
+  "event InsurancePayout(address indexed victim, uint256 amount)",
+  "event CycleCompleted()",
+  "event EpochAdvanced(uint8 fromEpoch, uint8 toEpoch)"
 ];
 var INSURANCE_POOL_ABI = [
   // View functions
-  "function getInsuranceRate(address token) view returns (uint256)",
+  "function admin() view returns (address)",
+  "function factory() view returns (address)",
   "function isFrozen() view returns (bool)",
+  "function getInsuranceRate(address token) view returns (uint256)",
   "function getBalance(address token) view returns (uint256)",
   "function getPendingClaim(address token, address user) view returns (uint256)",
-  "function getTokenStats(address token) view returns (uint256 balance, uint256 totalDeposits, uint256 totalClaimed, uint256 pendingClaims, uint256 rateBps, bool isSupported)",
+  "function getTokenStats(address token) view returns (uint256 balance, uint256 deposits, uint256 claimed, uint256 pending, uint256 rateBps, bool isSupported)",
   "function getSupportedTokens() view returns (address[])",
+  "function getTokenCount() view returns (uint256)",
   "function isTokenSupported(address token) view returns (bool)",
-  "function calculateInsurance(address token, uint256 amount) view returns (uint256)",
+  "function calculateInsurance(address token, uint256 contributionAmount) view returns (uint256)",
   // Write functions
-  "function claimPending(address token)"
+  "function claimPending(address token) returns (uint256 paid)",
+  // Admin functions
+  "function addToken(address token, uint256 rateBps)",
+  "function setInsuranceRate(address token, uint256 newRateBps)",
+  "function freeze()",
+  "function unfreeze()",
+  "function transferAdmin(address _newAdmin)",
+  "function acceptAdmin()",
+  "function cancelAdminTransfer()",
+  "function adminWithdraw(address token, address to, uint256 amount)",
+  // Events
+  "event Deposited(address indexed group, address indexed token, uint256 amount)",
+  "event PendingClaimPaid(address indexed victim, address indexed token, uint256 amount)",
+  "event AdminTransferCompleted(address indexed oldAdmin, address indexed newAdmin)",
+  "event FactorySet(address indexed factory)",
+  "event TokenAdded(address indexed token, uint256 rateBps)",
+  "event RateUpdated(address indexed token, uint256 oldRate, uint256 newRate)",
+  "event Frozen(address indexed by)",
+  "event Unfrozen(address indexed by)"
 ];
 var INCENTIVE_POOL_ABI = [
   // View functions
-  "function getBalance() view returns (uint256)",
+  "function factory() view returns (address)",
+  "function paymentToken() view returns (address)",
   "function bonusRateBps() view returns (uint256)",
   "function pendingBonus(address user) view returns (uint256)",
   "function totalPendingBonuses() view returns (uint256)",
+  "function totalDistributed() view returns (uint256)",
+  "function totalGrantsReceived() view returns (uint256)",
+  "function getPoolStats() view returns (uint256 balance, uint256 pending, uint256 distributed, uint256 grantsReceived, uint256 currentRateBps)",
+  "function calculatePotentialBonus(uint256 volumeContributed) view returns (uint256)",
+  "function getAvailableBalance() view returns (uint256)",
   // Write functions
-  "function claimBonus()"
+  "function claimBonus()",
+  "function depositGrant(uint256 amount)",
+  // Admin functions
+  "function setBonusRate(uint256 newRateBps)",
+  "function setFactory(address newFactory)",
+  "function emergencyWithdraw(address token, address to, uint256 amount)",
+  "function initiateControlTransfer(address newAdmin)",
+  "function acceptControlTransfer()",
+  "function cancelControlTransfer()",
+  // Events
+  "event GrantDeposited(address indexed donor, uint256 amount)",
+  "event BonusRateUpdated(uint256 oldRate, uint256 newRate)",
+  "event BonusRecorded(address indexed user, uint256 amount, uint256 volumeContributed)",
+  "event BonusClaimed(address indexed user, uint256 amount)",
+  "event ControlTransferCompleted(address indexed oldAdmin, address indexed newAdmin)"
+];
+var USER_DATA_STORAGE_ABI = [
+  // View functions
+  "function admin() view returns (address)",
+  "function pendingAdmin() view returns (address)",
+  "function maxDefaultsBeforeBan() view returns (uint32)",
+  "function getUserReputation(address user) view returns (uint32 completedCycles, uint32 defaultCount, uint64 totalVolumeContributed, uint40 firstParticipation, bool isBanned)",
+  "function isVerifiedHuman(address user) view returns (bool)",
+  "function getVerificationLevel(address user) view returns (uint8)",
+  "function getTotalDefaultedAmount(address user) view returns (uint256)",
+  "function isNullifierUsed(uint8 level, uint256 nullifierHash) view returns (bool)",
+  "function isBanned(address user) view returns (bool)",
+  "function meetsVerificationLevel(address user, uint8 requiredLevel) view returns (bool)",
+  "function isAuthorizedWriter(address writer) view returns (bool)",
+  // Admin functions
+  "function addAuthorizedWriter(address writer)",
+  "function removeAuthorizedWriter(address writer)",
+  "function setMaxDefaultsBeforeBan(uint32 _maxDefaults)",
+  "function transferAdmin(address newAdmin)",
+  "function acceptAdmin()",
+  "function cancelAdminTransfer()",
+  // Events
+  "event UserVerified(address indexed user, uint8 level, uint256 nullifierHash)",
+  "event CycleCompleted(address indexed user, uint256 volumeContributed)",
+  "event DefaultRecorded(address indexed user, uint256 amount, uint32 totalDefaults)",
+  "event UserBanned(address indexed user, uint32 defaultCount)",
+  "event UserUnbanned(address indexed user)",
+  "event FirstParticipationRecorded(address indexed user, uint40 timestamp)",
+  "event WriterAdded(address indexed writer)",
+  "event WriterRemoved(address indexed writer)",
+  "event MaxDefaultsBeforeBanUpdated(uint32 oldValue, uint32 newValue)",
+  "event AdminTransferCompleted(address indexed oldAdmin, address indexed newAdmin)"
+];
+var WORLD_ID_VERIFIER_ABI = [
+  // View functions
+  "function worldId() view returns (address)",
+  "function externalNullifier() view returns (uint256)",
+  "function userDataStorage() view returns (address)",
+  "function isVerifiedHuman(address user) view returns (bool)",
+  "function meetsVerificationLevel(address user, uint8 requiredLevel) view returns (bool)",
+  "function getUserVerificationLevel(address user) view returns (uint8)",
+  // Write functions
+  "function verifyHuman(uint8 level, uint256 root, uint256 nullifierHash, uint256[8] proof)",
+  // Events
+  "event HumanVerified(address indexed user, uint256 indexed nullifierHash, uint8 level)"
 ];
 var ERC20_ABI = [
   "function name() view returns (string)",
@@ -356,18 +525,15 @@ var MemberStatus = /* @__PURE__ */ ((MemberStatus2) => {
   return MemberStatus2;
 })(MemberStatus || {});
 var VerificationLevel = /* @__PURE__ */ ((VerificationLevel2) => {
-  VerificationLevel2[VerificationLevel2["NONE"] = 0] = "NONE";
+  VerificationLevel2[VerificationLevel2["DEVICE"] = 0] = "DEVICE";
   VerificationLevel2[VerificationLevel2["ORB"] = 1] = "ORB";
-  VerificationLevel2[VerificationLevel2["PHONE"] = 2] = "PHONE";
   return VerificationLevel2;
 })(VerificationLevel || {});
-var PositionMode = /* @__PURE__ */ ((PositionMode2) => {
-  PositionMode2[PositionMode2["FCFS"] = 0] = "FCFS";
-  PositionMode2[PositionMode2["RANDOM"] = 1] = "RANDOM";
-  PositionMode2[PositionMode2["AUCTION"] = 2] = "AUCTION";
-  PositionMode2[PositionMode2["PRESET"] = 3] = "PRESET";
-  return PositionMode2;
-})(PositionMode || {});
+var PayoutOrder = /* @__PURE__ */ ((PayoutOrder2) => {
+  PayoutOrder2[PayoutOrder2["FIFO"] = 0] = "FIFO";
+  PayoutOrder2[PayoutOrder2["RANDOM"] = 1] = "RANDOM";
+  return PayoutOrder2;
+})(PayoutOrder || {});
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   CHAIN_ID,
@@ -380,12 +546,14 @@ var PositionMode = /* @__PURE__ */ ((PositionMode2) => {
   INSURANCE_POOL_ABI,
   MAINNET_CONTRACTS,
   MemberStatus,
-  PositionMode,
+  PayoutOrder,
   ROUTER_ABI,
   TESTNET_CONTRACTS,
   TOKENS,
   TOKEN_ADDRESSES,
+  USER_DATA_STORAGE_ABI,
   VerificationLevel,
+  WORLD_ID_VERIFIER_ABI,
   formatTokenAmount,
   getContracts,
   getToken,

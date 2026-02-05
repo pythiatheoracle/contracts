@@ -1,7 +1,7 @@
 import { Address } from './addresses.mjs';
 export { CHAIN_ID, CONTRACT_INFO, ChainId, ContractInfo, MAINNET_CONTRACTS, ProtocolContracts, TESTNET_CONTRACTS, getContracts } from './addresses.mjs';
 export { TOKENS, TOKEN_ADDRESSES, Token, TokenSymbol, formatTokenAmount, getToken, getTokenByAddress, getTokenDecimals, getTokenSymbol, getTokensByCategory, parseTokenAmount } from './tokens.mjs';
-export { ERC20_ABI, FACTORY_ABI, GROUP_ABI, INCENTIVE_POOL_ABI, INSURANCE_POOL_ABI, ROUTER_ABI } from './abis.mjs';
+export { ERC20_ABI, FACTORY_ABI, GROUP_ABI, INCENTIVE_POOL_ABI, INSURANCE_POOL_ABI, ROUTER_ABI, USER_DATA_STORAGE_ABI, WORLD_ID_VERIFIER_ABI } from './abis.mjs';
 
 declare enum GroupStatus {
     COMMIT_PHASE = 0,
@@ -17,15 +17,12 @@ declare enum MemberStatus {
     COMPLETED = 4
 }
 declare enum VerificationLevel {
-    NONE = 0,
-    ORB = 1,
-    PHONE = 2
+    DEVICE = 0,// Phone/device verification (off-chain only on World Chain)
+    ORB = 1
 }
-declare enum PositionMode {
-    FCFS = 0,// First Come First Serve
-    RANDOM = 1,// Random assignment at start
-    AUCTION = 2,// Bid for positions
-    PRESET = 3
+declare enum PayoutOrder {
+    FIFO = 0,// Position = commit order
+    RANDOM = 1
 }
 
 interface GroupInfo {
@@ -61,8 +58,8 @@ interface MemberInfo {
 interface UserReputation {
     completedCycles: number;
     defaultCount: number;
-    totalVolume: bigint;
-    lastActivity: Date | null;
+    totalVolumeContributed: bigint;
+    firstParticipation: Date | null;
     isBanned: boolean;
 }
 interface EpochInfo {
@@ -88,4 +85,4 @@ interface ContributionBreakdown {
     toInsurance: bigint;
 }
 
-export { Address, type ContributionBreakdown, type EpochInfo, type GroupInfo, GroupStatus, type InsurancePoolStats, type MemberInfo, MemberStatus, PositionMode, type UserReputation, VerificationLevel };
+export { Address, type ContributionBreakdown, type EpochInfo, type GroupInfo, GroupStatus, type InsurancePoolStats, type MemberInfo, MemberStatus, PayoutOrder, type UserReputation, VerificationLevel };
