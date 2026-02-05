@@ -9,6 +9,9 @@ interface ProtocolContracts {
     ROUTER: Address;
     INCENTIVE_POOL: Address;
     INSURANCE_POOL: Address;
+    USER_DATA_STORAGE: Address;
+    WORLD_ID_VERIFIER: Address;
+    GROUP_DEPLOYER: Address;
 }
 declare const MAINNET_CONTRACTS: ProtocolContracts;
 declare const TESTNET_CONTRACTS: ProtocolContracts;

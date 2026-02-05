@@ -4,7 +4,7 @@ import {
   MAINNET_CONTRACTS,
   TESTNET_CONTRACTS,
   getContracts
-} from "./chunk-O5OAD6CP.mjs";
+} from "./chunk-HLZW3NOH.mjs";
 export {
   CHAIN_ID,
   CONTRACT_INFO,
