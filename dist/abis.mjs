@@ -7,7 +7,7 @@ import {
   ROUTER_ABI,
   USER_DATA_STORAGE_ABI,
   WORLD_ID_VERIFIER_ABI
-} from "./chunk-K3UUKCZR.mjs";
+} from "./chunk-YLOPUZYF.mjs";
 export {
   ERC20_ABI,
   FACTORY_ABI,

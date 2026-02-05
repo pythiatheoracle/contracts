@@ -32,12 +32,13 @@ export const FACTORY_ABI = [
   'function getUserVerificationLevel(address user) view returns (uint8)',
   'function getUserVerificationLevelRaw(address user) view returns (uint8)',
   'function isBanned(address user) view returns (bool)',
-  'function getTotalDefaultedAmount(address user) view returns (uint256)',
+  'function getDefaultedAmount(address user, address token) view returns (uint256)',
+  'function getDefaultedTokens(address user) view returns (address[])',
   'function meetsRequirements(address user, uint32 minCompletedCycles) view returns (bool)',
 
   // Write functions
   'function createGroup((string name, uint8 memberCount, uint256 contributionAmount, uint32 frequencySeconds, address paymentToken, uint16 collateralPercent, uint16 escrowPercent, uint8 escrowDelayEpochs, uint32 gracePeriodSeconds, uint8 requiredVerificationLevel, bool isInsured, uint32 minCompletedCycles, uint32 maxDefaultCount, uint64 minTotalVolume, uint40 minAccountAge, uint8 payoutOrder, bool affectsReputation) config, address[] whitelist) returns (address group)',
-  'function unban(address token)',
+  'function unban()',
 
   // Admin functions
   'function setRouter(address _router)',
@@ -52,7 +53,8 @@ export const FACTORY_ABI = [
   // Events
   'event GroupCreated(address indexed group, address indexed creator, uint8 memberCount, uint256 contributionAmount, address token)',
   'event UserBannedEvent(address indexed user, uint32 defaultCount)',
-  'event UserUnbanned(address indexed user, uint256 feePaid)',
+  'event UserUnbanned(address indexed user)',
+  'event UnbanFeePaid(address indexed user, address indexed token, uint256 fee)',
   'event CycleCompleted(address indexed user, address indexed group, uint256 volume)',
   'event DefaultRecorded(address indexed user, address indexed group)',
   'event TokenAllowlistUpdated(address indexed token, bool allowed)',
@@ -264,7 +266,8 @@ export const USER_DATA_STORAGE_ABI = [
   'function getUserReputation(address user) view returns (uint32 completedCycles, uint32 defaultCount, uint64 totalVolumeContributed, uint40 firstParticipation, bool isBanned)',
   'function isVerifiedHuman(address user) view returns (bool)',
   'function getVerificationLevel(address user) view returns (uint8)',
-  'function getTotalDefaultedAmount(address user) view returns (uint256)',
+  'function getDefaultedAmount(address user, address token) view returns (uint256)',
+  'function getDefaultedTokens(address user) view returns (address[])',
   'function isNullifierUsed(uint8 level, uint256 nullifierHash) view returns (bool)',
   'function isBanned(address user) view returns (bool)',
   'function meetsVerificationLevel(address user, uint8 requiredLevel) view returns (bool)',
@@ -281,7 +284,7 @@ export const USER_DATA_STORAGE_ABI = [
   // Events
   'event UserVerified(address indexed user, uint8 level, uint256 nullifierHash)',
   'event CycleCompleted(address indexed user, uint256 volumeContributed)',
-  'event DefaultRecorded(address indexed user, uint256 amount, uint32 totalDefaults)',
+  'event DefaultRecorded(address indexed user, address indexed token, uint256 amount, uint32 totalDefaults)',
   'event UserBanned(address indexed user, uint32 defaultCount)',
   'event UserUnbanned(address indexed user)',
   'event FirstParticipationRecorded(address indexed user, uint40 timestamp)',

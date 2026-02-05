@@ -55,13 +55,13 @@ var CHAIN_ID = {
   WORLDCHAIN_TESTNET: 4801
 };
 var MAINNET_CONTRACTS = {
-  FACTORY: "0x5142DCD24FE7e9D2a3B933fCCc6D22dd7b0D72dC",
-  ROUTER: "0x2942FB98e1336d4241b5Cb40330BcA1db438A774",
-  INCENTIVE_POOL: "0x2a1baf86aaDbE9cCF263F43152f2Fb3C75c7F786",
-  INSURANCE_POOL: "0x253EE2C09eB2bBAc3e62D65D257b53E151CA3126",
-  USER_DATA_STORAGE: "0x340e91f8f561b7355FA11227816b447211739acE",
-  WORLD_ID_VERIFIER: "0x3d8e4906558A213b7493Aa73CB80A83713A5d19f",
-  GROUP_DEPLOYER: "0x34222E5A2f91AA8E8e586a22952fbE3078625CD8"
+  FACTORY: "0x2a1bf876180765D083C49b9Ad595a8542715ceb1",
+  ROUTER: "0x4a3D3Dbf36a845Bfa6a908e5A4fE1E226bc2645c",
+  INCENTIVE_POOL: "0x7Ada45cf360Ce92Ace5765d5426075dB1d15Ac39",
+  INSURANCE_POOL: "0xB45CA7A8637984f843465bbdD9782f11bB555364",
+  USER_DATA_STORAGE: "0x89c00F79d4C5E594787c0F7cAF6F250e2142342B",
+  WORLD_ID_VERIFIER: "0x26CEd0f39e318AF8669F21503c3C7b2C53278f5d",
+  GROUP_DEPLOYER: "0xEb51e23478AC2e57a98525B8EB623772EBa163E7"
 };
 var TESTNET_CONTRACTS = {
   FACTORY: "0x0000000000000000000000000000000000000000",
@@ -271,11 +271,12 @@ var FACTORY_ABI = [
   "function getUserVerificationLevel(address user) view returns (uint8)",
   "function getUserVerificationLevelRaw(address user) view returns (uint8)",
   "function isBanned(address user) view returns (bool)",
-  "function getTotalDefaultedAmount(address user) view returns (uint256)",
+  "function getDefaultedAmount(address user, address token) view returns (uint256)",
+  "function getDefaultedTokens(address user) view returns (address[])",
   "function meetsRequirements(address user, uint32 minCompletedCycles) view returns (bool)",
   // Write functions
   "function createGroup((string name, uint8 memberCount, uint256 contributionAmount, uint32 frequencySeconds, address paymentToken, uint16 collateralPercent, uint16 escrowPercent, uint8 escrowDelayEpochs, uint32 gracePeriodSeconds, uint8 requiredVerificationLevel, bool isInsured, uint32 minCompletedCycles, uint32 maxDefaultCount, uint64 minTotalVolume, uint40 minAccountAge, uint8 payoutOrder, bool affectsReputation) config, address[] whitelist) returns (address group)",
-  "function unban(address token)",
+  "function unban()",
   // Admin functions
   "function setRouter(address _router)",
   "function setUnbanFeeMultiplier(uint256 _multiplierBps)",
@@ -288,7 +289,8 @@ var FACTORY_ABI = [
   // Events
   "event GroupCreated(address indexed group, address indexed creator, uint8 memberCount, uint256 contributionAmount, address token)",
   "event UserBannedEvent(address indexed user, uint32 defaultCount)",
-  "event UserUnbanned(address indexed user, uint256 feePaid)",
+  "event UserUnbanned(address indexed user)",
+  "event UnbanFeePaid(address indexed user, address indexed token, uint256 fee)",
   "event CycleCompleted(address indexed user, address indexed group, uint256 volume)",
   "event DefaultRecorded(address indexed user, address indexed group)",
   "event TokenAllowlistUpdated(address indexed token, bool allowed)",
@@ -457,7 +459,8 @@ var USER_DATA_STORAGE_ABI = [
   "function getUserReputation(address user) view returns (uint32 completedCycles, uint32 defaultCount, uint64 totalVolumeContributed, uint40 firstParticipation, bool isBanned)",
   "function isVerifiedHuman(address user) view returns (bool)",
   "function getVerificationLevel(address user) view returns (uint8)",
-  "function getTotalDefaultedAmount(address user) view returns (uint256)",
+  "function getDefaultedAmount(address user, address token) view returns (uint256)",
+  "function getDefaultedTokens(address user) view returns (address[])",
   "function isNullifierUsed(uint8 level, uint256 nullifierHash) view returns (bool)",
   "function isBanned(address user) view returns (bool)",
   "function meetsVerificationLevel(address user, uint8 requiredLevel) view returns (bool)",
@@ -472,7 +475,7 @@ var USER_DATA_STORAGE_ABI = [
   // Events
   "event UserVerified(address indexed user, uint8 level, uint256 nullifierHash)",
   "event CycleCompleted(address indexed user, uint256 volumeContributed)",
-  "event DefaultRecorded(address indexed user, uint256 amount, uint32 totalDefaults)",
+  "event DefaultRecorded(address indexed user, address indexed token, uint256 amount, uint32 totalDefaults)",
   "event UserBanned(address indexed user, uint32 defaultCount)",
   "event UserUnbanned(address indexed user)",
   "event FirstParticipationRecorded(address indexed user, uint40 timestamp)",

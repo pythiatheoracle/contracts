@@ -131,7 +131,7 @@ export const TOKENS: Token[] = [
  * Get token by symbol
  */
 export function getToken(symbol: TokenSymbol): Token {
-  const token = TOKENS.find(t => t.symbol === symbol)
+  const token = TOKENS.find((t) => t.symbol === symbol)
   if (!token) throw new Error(`Unknown token: ${symbol}`)
   return token
 }
@@ -140,7 +140,7 @@ export function getToken(symbol: TokenSymbol): Token {
  * Get token by address
  */
 export function getTokenByAddress(address: Address): Token | undefined {
-  return TOKENS.find(t => t.address.toLowerCase() === address.toLowerCase())
+  return TOKENS.find((t) => t.address.toLowerCase() === address.toLowerCase())
 }
 
 /**
@@ -163,7 +163,7 @@ export function getTokenDecimals(address: Address): number {
  * Get tokens by category
  */
 export function getTokensByCategory(category: Token['category']): Token[] {
-  return TOKENS.filter(t => t.category === category)
+  return TOKENS.filter((t) => t.category === category)
 }
 
 /**
