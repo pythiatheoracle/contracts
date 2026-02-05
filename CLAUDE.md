@@ -4,11 +4,11 @@ Shared package for ROSCA protocol contract addresses, ABIs, and types.
 
 ## Quick Start
 
-| Command | Description |
-|---------|-------------|
-| `npm install` | Install dependencies |
-| `npm run build` | Build package (tsup) |
-| `npm run dev` | Watch mode |
+| Command             | Description           |
+| ------------------- | --------------------- |
+| `npm install`       | Install dependencies  |
+| `npm run build`     | Build package (tsup)  |
+| `npm run dev`       | Watch mode            |
 | `npm run typecheck` | TypeScript validation |
 
 ## Usage
@@ -16,9 +16,9 @@ Shared package for ROSCA protocol contract addresses, ABIs, and types.
 ```typescript
 import {
   // Addresses
-  MAINNET_CONTRACTS,    // { FACTORY, ROUTER, INCENTIVE_POOL, INSURANCE_POOL }
-  TOKEN_ADDRESSES,      // { USDC, WLD, WETH, EURC, wARS, wBRL, ... }
-  CHAIN_ID,             // { WORLDCHAIN_MAINNET: 480, WORLDCHAIN_TESTNET: 4801 }
+  MAINNET_CONTRACTS, // { FACTORY, ROUTER, INCENTIVE_POOL, INSURANCE_POOL }
+  TOKEN_ADDRESSES, // { USDC, WLD, WETH, EURC, wARS, wBRL, ... }
+  CHAIN_ID, // { WORLDCHAIN_MAINNET: 480, WORLDCHAIN_TESTNET: 4801 }
 
   // ABIs (human-readable for viem)
   FACTORY_ABI,
@@ -29,15 +29,15 @@ import {
   ERC20_ABI,
 
   // Enums
-  GroupStatus,          // COMMIT_PHASE, ACTIVE, COMPLETED, FAILED
-  MemberStatus,         // PENDING, COMMITTED, ACTIVE, DEFAULTED, COMPLETED
+  GroupStatus, // COMMIT_PHASE, ACTIVE, COMPLETED, FAILED
+  MemberStatus, // PENDING, COMMITTED, ACTIVE, DEFAULTED, COMPLETED
 
   // Token utilities
-  TOKENS,               // Array of all tokens with metadata
-  getToken,             // getToken('USDC') -> { symbol, decimals, address, ... }
-  getTokenByAddress,    // getTokenByAddress('0x...') -> Token | undefined
-  formatTokenAmount,    // formatTokenAmount(1000000n, USDC) -> "$1.00"
-  parseTokenAmount,     // parseTokenAmount(1, 'USDC') -> 1000000n
+  TOKENS, // Array of all tokens with metadata
+  getToken, // getToken('USDC') -> { symbol, decimals, address, ... }
+  getTokenByAddress, // getTokenByAddress('0x...') -> Token | undefined
+  formatTokenAmount, // formatTokenAmount(1000000n, USDC) -> "$1.00"
+  parseTokenAmount, // parseTokenAmount(1, 'USDC') -> 1000000n
 
   // Types
   type Address,
@@ -59,12 +59,15 @@ src/
 
 ## Contract Addresses (World Chain Mainnet)
 
-| Contract | Address |
-|----------|---------|
-| ROSCAFactory | `0x16795eEE495a07fc4FE94b9f5541F5aB4622DB5b` |
-| ROSCARouter | `0xf3D8ABEABd1bFD02b0D2bf3017ada00ebC6cC4Cc` |
-| IncentivePool | `0x0cCe743998492fB42A5Fc495769360B4011510e7` |
-| InsurancePool | `0x6C467EC0B19bb76b0baCDC44F04dDCFFF48E4730` |
+| Contract         | Address                                      |
+| ---------------- | -------------------------------------------- |
+| ROSCAFactory     | `0x5142DCD24FE7e9D2a3B933fCCc6D22dd7b0D72dC` |
+| ROSCARouter      | `0x2942FB98e1336d4241b5Cb40330BcA1db438A774` |
+| IncentivePool    | `0x2a1baf86aaDbE9cCF263F43152f2Fb3C75c7F786` |
+| InsurancePool    | `0x253EE2C09eB2bBAc3e62D65D257b53E151CA3126` |
+| UserDataStorage  | `0x340e91f8f561b7355FA11227816b447211739acE` |
+| WorldIDVerifier  | `0x3d8e4906558A213b7493Aa73CB80A83713A5d19f` |
+| GroupDeployer    | `0x34222E5A2f91AA8E8e586a22952fbE3078625CD8` |
 
 ## Updating
 
